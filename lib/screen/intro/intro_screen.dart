@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:obras_de_arte/data/settings_repository.dart';
 import 'package:obras_de_arte/routes.dart';
 
 class IntroScreen extends StatefulWidget {
@@ -10,21 +11,35 @@ class IntroScreen extends StatefulWidget {
 }
 
 class _IntroScreenState extends State<IntroScreen> {
+  SettingsRepository? _settingsRepository;
+  @override
+  void initState() {
+    super.initState();
+    _initRepository();
+  }
+
+  Future<void> _initRepository() async {
+    final repo = await SettingsRepository.create();
+    setState(() {
+      _settingsRepository = repo;
+    });
+  }
+
   final List<Map<String, String>> _pages = [
     {
       'title': 'Bem-vindo ao app',
       'subtitle': 'Aprenda a usar o app passo a passo',
-      'lottie': 'assets/lotties/intro1.json',
+      'lottie': 'assets/lottie/intro1.json',
     },
     {
       'title': 'Funcionalidades',
       'subtitle': 'Aprenda as funcionalidades',
-      'lottie': 'assets/lotties/intro1.json',
+      'lottie': 'assets/lottie/intro2.json',
     },
     {
       'title': 'Começe a agora',
       'subtitle': 'começe a usar o app agora',
-      'lottie': 'assets/lotties/intro1.json',
+      'lottie': 'assets/lottie/intro3.json',
     },
   ];
 
@@ -43,7 +58,17 @@ class _IntroScreenState extends State<IntroScreen> {
     } else {
       _finishItro();
     }
-    void onBack() {
+
+    Future<void> _finishIntro() async {
+      await _settingsRepository?.setShowIntro(!_dontShowAgain);
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, Routes.home);
+    }
+
+  }
+  
+  
+    void _onBack() {
       if (_currentPage > 0) {
         _pageController.previousPage(
           duration: Duration(milliseconds: 300),
@@ -51,7 +76,6 @@ class _IntroScreenState extends State<IntroScreen> {
         );
       }
     }
-  }
 
   void _finishItro() {
     Navigator.pushReplacementNamed(context, Routes.home);
@@ -101,7 +125,25 @@ class _IntroScreenState extends State<IntroScreen> {
               ),
             ),
             // Aqui será adicionado o checkbox
-            if (isLastPage) Padding(padding: EdgeInsets.all(16)),
+            if (isLastPage)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: _dontShowAgain,
+                      onChanged: (val) {
+                        setState(() {
+                          _dontShowAgain = val ?? false;
+                        });
+                      },
+                    ),
+                    Expanded(
+                      child: Text('Não mostrar essa introdução novamente.'),
+                    ),
+                  ],
+                ),
+              ),
             // Aqui serão adicionados os botões de navegação
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -110,7 +152,17 @@ class _IntroScreenState extends State<IntroScreen> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [],
+                children: [if (_currentPage > 0)
+ TextButton(onPressed: _onBack, child:
+Text('Voltar'))
+ else
+ SizedBox(width: 80), // espaço para alinhar
+ TextButton(
+ onPressed: _onNext,
+ child: Text(isLastPage ? 'Concluir' :
+'Avançar'),
+ ),
+],
               ),
             ),
           ],
